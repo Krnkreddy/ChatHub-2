@@ -10,8 +10,10 @@ import {
   Settings,
   Plus,
   Filter,
+  LogOut,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 // Mock data
 const platforms = [
@@ -89,6 +91,7 @@ const Dashboard = () => {
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedConversation, setSelectedConversation] = useState(mockConversations[0]);
   const [messageInput, setMessageInput] = useState("");
+  const { signOut } = useAuth();
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +120,9 @@ const Dashboard = () => {
               <Settings className="w-5 h-5" />
             </Button>
           </Link>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
       </header>
 
