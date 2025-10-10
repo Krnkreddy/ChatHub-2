@@ -1,120 +1,103 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare,
-  Send,
   Search,
   Settings,
   Plus,
-  Filter,
   LogOut,
+  User,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
-// Mock data
-const platforms = [
-  { id: "all", name: "All Messages", color: "primary" },
-  { id: "whatsapp", name: "WhatsApp", color: "whatsapp" },
-  { id: "telegram", name: "Telegram", color: "telegram" },
-  { id: "messenger", name: "Messenger", color: "messenger" },
-  { id: "discord", name: "Discord", color: "discord" },
-];
-
-const mockConversations = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    platform: "whatsapp",
-    lastMessage: "Hey! Are we still on for tomorrow?",
-    time: "2m ago",
-    unread: 2,
-    avatar: "SJ",
-  },
-  {
-    id: 2,
-    name: "Tech Team",
-    platform: "telegram",
-    lastMessage: "The new feature is ready for testing",
-    time: "15m ago",
-    unread: 0,
-    avatar: "TT",
-  },
-  {
-    id: 3,
-    name: "Mike Chen",
-    platform: "messenger",
-    lastMessage: "Thanks for your help!",
-    time: "1h ago",
-    unread: 1,
-    avatar: "MC",
-  },
-  {
-    id: 4,
-    name: "Design Squad",
-    platform: "discord",
-    lastMessage: "Check out the new mockups",
-    time: "2h ago",
-    unread: 5,
-    avatar: "DS",
-  },
-];
-
-const mockMessages = [
-  {
-    id: 1,
-    sender: "Sarah Johnson",
-    content: "Hey! Are we still on for tomorrow?",
-    time: "10:32 AM",
-    isOwn: false,
-  },
-  {
-    id: 2,
-    sender: "You",
-    content: "Yes! Looking forward to it 😊",
-    time: "10:33 AM",
-    isOwn: true,
-  },
-  {
-    id: 3,
-    sender: "Sarah Johnson",
-    content: "Great! See you at 3 PM then",
-    time: "10:35 AM",
-    isOwn: false,
-  },
-];
+import { useTasks } from "@/hooks/useTasks";
+import { TaskCard } from "@/components/TaskCard";
+import { TaskDialog } from "@/components/TaskDialog";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
-  const [selectedPlatform, setSelectedPlatform] = useState("all");
-  const [selectedConversation, setSelectedConversation] = useState(mockConversations[0]);
-  const [messageInput, setMessageInput] = useState("");
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { tasks, createTask, updateTask, deleteTask } = useTasks();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (messageInput.trim()) {
-      // Handle message send
-      setMessageInput("");
+  const handleSaveTask = async (taskData: any) => {
+    if (editingTask) {
+      await updateTask(editingTask.id, taskData);
+      setEditingTask(null);
+    } else {
+      await createTask(taskData);
     }
   };
 
+  const handleEditTask = (task: any) => {
+    setEditingTask(task);
+    setTaskDialogOpen(true);
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (activeFilter === "all") return matchesSearch;
+    return matchesSearch && task.status === activeFilter;
+  });
+
+  const stats = [
+    {
+      title: "Total Tasks",
+      value: tasks.length,
+      icon: TrendingUp,
+      color: "bg-blue-500/10 text-blue-500",
+    },
+    {
+      title: "Completed",
+      value: tasks.filter((t) => t.status === "completed").length,
+      icon: CheckCircle2,
+      color: "bg-green-500/10 text-green-500",
+    },
+    {
+      title: "In Progress",
+      value: tasks.filter((t) => t.status === "in_progress").length,
+      icon: Clock,
+      color: "bg-yellow-500/10 text-yellow-500",
+    },
+    {
+      title: "High Priority",
+      value: tasks.filter((t) => t.priority === "high").length,
+      icon: AlertCircle,
+      color: "bg-red-500/10 text-red-500",
+    },
+  ];
+
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card">
+      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold">ChatHub</span>
+          <span className="text-xl font-bold">TaskHub</span>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon">
-            <Search className="w-5 h-5" />
-          </Button>
+          <NotificationDropdown />
+          <Link to="/profile">
+            <Button variant="ghost" size="icon">
+              <User className="w-5 h-5" />
+            </Button>
+          </Link>
           <Link to="/settings">
             <Button variant="ghost" size="icon">
               <Settings className="w-5 h-5" />
@@ -126,150 +109,118 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Platform Filters */}
-        <aside className="w-20 border-r border-border bg-card flex flex-col items-center py-6 gap-4">
-          {platforms.map((platform) => (
-            <button
-              key={platform.id}
-              onClick={() => setSelectedPlatform(platform.id)}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                selectedPlatform === platform.id
-                  ? "gradient-primary shadow-glow"
-                  : "bg-secondary hover:bg-secondary/80"
-              }`}
-              title={platform.name}
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
+        {/* Welcome Section */}
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-4xl font-bold mb-2">
+            Welcome back, {user?.email?.split("@")[0]}!
+          </h1>
+          <p className="text-muted-foreground">
+            Here's what's happening with your tasks today.
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <Card
+              key={stat.title}
+              className="p-6 shadow-card animate-fade-in hover:shadow-glow transition-all"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <MessageSquare
-                className={`w-5 h-5 ${
-                  selectedPlatform === platform.id ? "text-white" : "text-muted-foreground"
-                }`}
-              />
-            </button>
-          ))}
-          <div className="flex-1" />
-          <Button size="icon" variant="ghost" className="rounded-xl">
-            <Plus className="w-5 h-5" />
-          </Button>
-        </aside>
-
-        {/* Conversations List */}
-        <aside className="w-80 border-r border-border bg-card flex flex-col">
-          <div className="p-4 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search conversations..."
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-2">
-              {mockConversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-3 rounded-lg flex items-start gap-3 transition-colors ${
-                    selectedConversation.id === conv.id
-                      ? "bg-accent"
-                      : "hover:bg-secondary"
-                  }`}
-                >
-                  <Avatar>
-                    <AvatarFallback className={`bg-${conv.platform}`}>
-                      {conv.avatar}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-sm truncate">
-                        {conv.name}
-                      </h3>
-                      <span className="text-xs text-muted-foreground">
-                        {conv.time}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {conv.lastMessage}
-                    </p>
-                  </div>
-                  {conv.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                      {conv.unread}
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </aside>
-
-        {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col">
-          {/* Chat Header */}
-          <div className="h-16 border-b border-border flex items-center justify-between px-6 bg-card">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>{selectedConversation.avatar}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-semibold">{selectedConversation.name}</h2>
-                <p className="text-xs text-muted-foreground capitalize">
-                  via {selectedConversation.platform}
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon">
-              <Filter className="w-5 h-5" />
-            </Button>
-          </div>
-
-          {/* Messages Area */}
-          <ScrollArea className="flex-1 p-6">
-            <div className="space-y-4">
-              {mockMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                      message.isOwn
-                        ? "gradient-primary text-white"
-                        : "bg-card shadow-card"
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                    <span
-                      className={`text-xs mt-1 block ${
-                        message.isOwn ? "text-white/70" : "text-muted-foreground"
-                      }`}
-                    >
-                      {message.time}
-                    </span>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {stat.title}
+                  </p>
+                  <p className="text-3xl font-bold">{stat.value}</p>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}
+                >
+                  <stat.icon className="w-6 h-6" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
 
-          {/* Message Input */}
-          <div className="p-4 border-t border-border bg-card">
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <Input
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1"
-              />
-              <Button type="submit" size="icon" className="shadow-glow">
-                <Send className="w-5 h-5" />
-              </Button>
-            </form>
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 animate-fade-in">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
-        </main>
+          <Button
+            onClick={() => {
+              setEditingTask(null);
+              setTaskDialogOpen(true);
+            }}
+            className="shadow-glow gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            New Task
+          </Button>
+        </div>
+
+        {/* Tasks Section */}
+        <Tabs value={activeFilter} onValueChange={setActiveFilter} className="animate-fade-in">
+          <TabsList className="grid w-full max-w-md grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="todo">To Do</TabsTrigger>
+            <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeFilter} className="mt-6">
+            {filteredTasks.length === 0 ? (
+              <Card className="p-12 text-center shadow-card">
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">No tasks found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery
+                    ? "Try adjusting your search"
+                    : "Create your first task to get started"}
+                </p>
+                <Button
+                  onClick={() => {
+                    setEditingTask(null);
+                    setTaskDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create Task
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {filteredTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onUpdate={updateTask}
+                    onDelete={deleteTask}
+                    onEdit={handleEditTask}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <TaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        onSave={handleSaveTask}
+        task={editingTask}
+      />
     </div>
   );
 };
