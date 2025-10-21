@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Zap, Shield, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const Landing = () => {
+const LandingPage = () => {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -139,4 +139,4 @@ const Landing = () => {
   );
 };
 
-export default Landing;
+export default LandingPage;

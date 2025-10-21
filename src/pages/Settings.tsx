@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { MessageSquare, ArrowLeft, Key, Bell, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const Settings = () => {
+const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -137,4 +137,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default SettingsPage;

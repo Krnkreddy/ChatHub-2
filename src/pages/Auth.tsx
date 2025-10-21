@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Separator } from "@/components/ui/separator";
 
-const Auth = () => {
+const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +18,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
@@ -170,4 +169,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default AuthPage;

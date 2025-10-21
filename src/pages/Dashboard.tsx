@@ -87,7 +87,7 @@ const mockMessages = [
   },
 ];
 
-const Dashboard = () => {
+const DashboardPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedConversation, setSelectedConversation] = useState(mockConversations[0]);
   const [messageInput, setMessageInput] = useState("");
@@ -274,4 +274,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardPage;
